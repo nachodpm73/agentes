@@ -1,0 +1,6 @@
+.env
+.env.local
+*.key
+*.pem
+logs/
+.hermes/
