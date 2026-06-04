@@ -1,0 +1,5 @@
+requests
+pypdf
+weasyprint
+# Opcional, mejor fidelidad con HTML de email (recomendado):
+#   pip install playwright && python -m playwright install chromium
