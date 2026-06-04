@@ -107,12 +107,25 @@ def build_system(estilo):
 def build_user(estilo, hoy):
     temas = ", ".join(estilo.get("temas", []))
     fuentes = ", ".join(estilo.get("fuentes_sugeridas", []))
+    # Viernes de la edicion (hoy si es viernes, si no el proximo) y ventana de 7 dias.
+    h = dt.date.fromisoformat(hoy)
+    viernes = h + dt.timedelta((4 - h.weekday()) % 7)
+    desde = viernes - dt.timedelta(days=7)
     return (
-        f"Hoy es {hoy}. Busca en la web las noticias mas relevantes de los ultimos "
-        f"7 dias sobre estos temas: {temas}. "
-        f"Prioriza estas fuentes si es posible: {fuentes}. "
-        "Selecciona y resume las noticias siguiendo las secciones y la longitud del "
-        "noticiario. Cada noticia debe incluir un enlace a la fuente.\n\n"
+        f"Hoy es {hoy}. La edicion corresponde al VIERNES {viernes.isoformat()}.\n\n"
+        "REGLA DE RECENCIA (OBLIGATORIA): usa SOLO noticias publicadas en los 7 dias "
+        f"anteriores a ese viernes, es decir entre {desde.isoformat()} y "
+        f"{viernes.isoformat()}. DESCARTA cualquier noticia anterior a {desde.isoformat()}. "
+        "Si una seccion no tiene nada de su ambito en esa ventana, rellenala con la "
+        "noticia mas RECIENTE que encaje en los temas (nunca anterior a "
+        f"{desde.isoformat()}).\n\n"
+        "BUSQUEDA: haz VARIAS busquedas web (2-3 por seccion/tema), con terminos que "
+        "incluyan el mes y ano actual, 'esta semana' o 'ultimos dias', los nombres de las "
+        f"fuentes y de Aragon/Zaragoza/PLAZA/eje del Ebro. Temas: {temas}. "
+        f"Fuentes prioritarias: {fuentes}. Comprueba la FECHA de cada noticia antes de incluirla.\n\n"
+        "Selecciona y resume siguiendo las secciones y longitud del noticiario. En cada "
+        "noticia, al final del cuerpo, anade en cursiva y pequeno (Fuente: MEDIO, DD/MM/AAAA) "
+        "con enlace real a la fuente.\n\n"
         "Devuelve EXACTAMENTE dos bloques con estos marcadores y nada mas fuera de ellos:\n"
         "<<<SUBJECT>>>\nlinea de asunto del email (sin comillas)\n<<<END_SUBJECT>>>\n"
         "<<<HTML>>>\ndocumento HTML completo del noticiario, autocontenido, con estilos "
