@@ -1,0 +1,62 @@
+{
+  "nombre": "Mercado transporte internacional - Viernes de Noticias",
+  "idioma": "es",
+  "espiritu": "Boletin semanal especializado en comercio exterior, logistica y transporte internacional con foco en Aragon y el valle del Ebro. Su mision es mantener informadas a las empresas exportadoras y operadores logisticos sobre las tendencias del mercado, conectando la actualidad local con las grandes dinamicas nacionales e internacionales que afectan a la competitividad y la internacionalizacion del tejido empresarial.",
+  "tono": "Profesional, informativo y divulgativo. Voz institucional y neutra, con vocacion analitica: contextualiza cada noticia y explica su impacto para las empresas. Sin ironia ni coloquialismos, orientado a aportar valor estrategico.",
+  "audiencia": "Empresas exportadoras e importadoras, pymes con vocacion internacional, operadores logisticos, directivos y profesionales del comercio exterior, principalmente de Aragon, Navarra y La Rioja (eje del Ebro).",
+  "secciones": [
+    {
+      "titulo": "NOTICIA DESTACADA",
+      "descripcion": "Tema principal de la semana, normalmente un proyecto estrategico, alianza logistica o acontecimiento de gran impacto para el comercio exterior. Se desarrolla en mayor profundidad que el resto.",
+      "num_items": 1
+    },
+    {
+      "titulo": "NOTICIAS LOCALES",
+      "descripcion": "Actualidad de Aragon y comunidades del eje del Ebro (Navarra, La Rioja): proyectos logisticos, convenios, premios, datos de exportacion regionales e iniciativas de internacionalizacion.",
+      "num_items": 3
+    },
+    {
+      "titulo": "NOTICIAS NACIONALES",
+      "descripcion": "Comercio exterior espanol, ferias del sector, datos de puertos, balanza comercial, acuerdos comerciales de la UE y politica industrial con impacto en Espana.",
+      "num_items": 2
+    },
+    {
+      "titulo": "MIRADA INTERNACIONAL",
+      "descripcion": "Grandes dinamicas geopoliticas y comerciales globales: estrategia portuaria china, tensiones en rutas maritimas, aranceles, transporte aereo y cadenas de suministro mundiales.",
+      "num_items": 1
+    }
+  ],
+  "longitud_total_palabras": 900,
+  "temas": [
+    "Comercio exterior e internacionalizacion",
+    "Logistica y transporte de mercancias",
+    "Transporte ferroviario e intermodalidad",
+    "Puertos y transporte maritimo",
+    "Corredores logisticos y plataformas (PLAZA, eje del Ebro)",
+    "Balanza comercial y datos de exportacion",
+    "Acuerdos y tensiones comerciales (UE, EEUU, China)",
+    "Sostenibilidad y descarbonizacion logistica",
+    "Digitalizacion y gemelos digitales en logistica",
+    "Geopolitica del comercio global",
+    "Ferias y eventos del sector logistico",
+    "Politica industrial y fondos europeos"
+  ],
+  "fuentes_sugeridas": [
+    "Port de Barcelona",
+    "AREX (Aragon Exterior)",
+    "ALIA - Cluster Logistico de Aragon",
+    "Camaras de Comercio de Zaragoza, Huesca y Teruel",
+    "Escola Europea de Short Sea Shipping",
+    "Ministerio de Industria",
+    "Nastat (Instituto de Estadistica de Navarra)",
+    "FER - Federacion de Empresarios de La Rioja",
+    "Datacomex / ICEX",
+    "Diario del Puerto",
+    "Cadena de Suministro",
+    "heraldo.es",
+    "eleconomista.es",
+    "expansion.com"
+  ],
+  "instrucciones_estilo": "Cada noticia se estructura con un titular corto y directo (frase nominal o sujeto+verbo, sin dos puntos salvo para eventos/marcas como 'SIL 2026:'). El cuerpo consta de dos parrafos: el primero presenta el hecho con datos concretos (cifras, fechas, actores), el segundo aporta contexto, impacto para las empresas y proyeccion estrategica. Tono institucional, frases claras y de longitud media. Usar cifras precisas (euros, TEU, porcentajes) cuando existan. Las noticias locales pueden cerrar con un enlace a la fuente ('Para mas detalles, visite...'). Extension orientativa: 120-200 palabras por noticia destacada/nacional/internacional, 80-150 las locales. Sin despedida personal; cierre directo tras la ultima seccion.",
+  "instrucciones_html": "Maquetacion sobria de email corporativo. Cabecera con titulo 'Mercado transporte internacional: Semana XX' y subtitulo con fecha, hora y nombre de la edicion ('Viernes de Noticias Semana XX'). Enlace superior 'View this email in your browser'. Cada seccion encabezada por un emoji identificativo y titulo en mayusculas: 🗞 NOTICIA DESTACADA, 🏗 NOTICIAS LOCALES, 🇪🇸 NOTICIAS NACIONALES, 🌐 MIRADA INTERNACIONAL. Bajo cada seccion, bloques de noticia con titular en negrita y parrafos justificados. Paleta corporativa sobria (azules/grises sobre fondo blanco). Pie de pagina con aviso legal RGPD, copyright con campos de combinacion (*|CURRENT_YEAR|*, *|LIST:COMPANY|*), direccion postal y enlaces 'Actualizar tus preferencias | Darse de baja'."
+}
