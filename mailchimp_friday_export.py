@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
 """
-Exporta a PDF (legible y respetando el formato) todas las campañas de Mailchimp
-enviadas un VIERNES a una audiencia/público concreto (por defecto "OPZGZ").
+Exporta a PDF (legible y respetando el formato) todas las campanas de Mailchimp
+enviadas un VIERNES a una audiencia/publico concreto (por defecto "OPZGZ").
 
-Uso:
-    export MAILCHIMP_API_KEY="xxxxxxxx-usXX"
-    python3 mailchimp_friday_export.py --audience OPZGZ --out viernes_OPZGZ.pdf
-
-La API key también se puede pasar con --api-key.
-El sufijo de la key (-usXX) indica el datacenter y se usa automáticamente.
-
-Renderizado HTML -> PDF: usa el primer motor disponible de:
-    1. Playwright (Chromium)  -> mejor fidelidad con HTML de email
-    2. wkhtmltopdf (pdfkit)
-    3. WeasyPrint
-Y combina todas las campañas en un único PDF (una sección por campaña).
+Uso (Windows):
+    set MAILCHIMP_API_KEY=xxxxxxxx-usXX
+    py mailchimp_friday_export.py --audience OPZGZ --out viernes_OPZGZ.pdf
 """
 
 import argparse
@@ -25,16 +16,13 @@ import re
 import sys
 import tempfile
 import time
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import requests
 
 API_BASE_TMPL = "https://{dc}.api.mailchimp.com/3.0"
 
 
-# --------------------------------------------------------------------------- #
-# Cliente Mailchimp
-# --------------------------------------------------------------------------- #
 class Mailchimp:
     def __init__(self, api_key: str):
         if "-" not in api_key:
@@ -49,7 +37,7 @@ class Mailchimp:
     def _get(self, path: str, params: Optional[dict] = None) -> dict:
         for attempt in range(5):
             r = self.session.get(self.base + path, params=params, timeout=60)
-            if r.status_code == 429:  # rate limit
+            if r.status_code == 429:
                 time.sleep(2 ** attempt)
                 continue
             if not r.ok:
@@ -58,7 +46,6 @@ class Mailchimp:
         sys.exit(f"ERROR: rate limit persistente en {path}")
 
     def find_list(self, name: str) -> dict:
-        """Busca la audiencia por nombre exacto (case-insensitive) o por substring."""
         data = self._get("/lists", {"count": 1000, "fields": "lists.id,lists.name"})
         lists = data.get("lists", [])
         if not lists:
@@ -74,7 +61,6 @@ class Mailchimp:
         sys.exit(f"ERROR: no encuentro la audiencia '{name}'. Disponibles: {nombres}")
 
     def sent_campaigns(self, list_id: str) -> List[dict]:
-        """Devuelve todas las campañas enviadas a esa audiencia."""
         out, offset = [], 0
         while True:
             data = self._get(
@@ -103,18 +89,14 @@ class Mailchimp:
         return data.get("html") or data.get("archive_html") or ""
 
 
-# --------------------------------------------------------------------------- #
-# Utilidades
-# --------------------------------------------------------------------------- #
 def is_friday(send_time: str) -> bool:
     if not send_time:
         return False
-    # send_time viene en ISO 8601 con timezone, p.ej. 2024-05-17T10:00:00+00:00
     try:
         d = dt.datetime.fromisoformat(send_time.replace("Z", "+00:00"))
     except ValueError:
         return False
-    return d.weekday() == 4  # 0=lunes ... 4=viernes
+    return d.weekday() == 4
 
 
 def fmt_date(send_time: str) -> str:
@@ -128,17 +110,17 @@ def fmt_date(send_time: str) -> str:
 def header_html(subject: str, title: str, when: str) -> str:
     subject = subject or "(sin asunto)"
     title = title or ""
-    return f"""
-    <div style="font-family: Arial, Helvetica, sans-serif; border-bottom:2px solid #333;
-                padding:8px 12px; margin:0 0 4px 0; background:#f4f4f4;">
-      <div style="font-size:15px; font-weight:bold; color:#111;">{subject}</div>
-      <div style="font-size:11px; color:#666;">Viernes · {when}{(' · ' + title) if title else ''}</div>
-    </div>"""
+    extra = (" - " + title) if title else ""
+    return (
+        '<div style="font-family: Arial, Helvetica, sans-serif; '
+        'border-bottom:2px solid #333; padding:8px 12px; margin:0 0 4px 0; '
+        'background:#f4f4f4;">'
+        f'<div style="font-size:15px; font-weight:bold; color:#111;">{subject}</div>'
+        f'<div style="font-size:11px; color:#666;">Viernes - {when}{extra}</div>'
+        "</div>"
+    )
 
 
-# --------------------------------------------------------------------------- #
-# Renderizado HTML -> PDF
-# --------------------------------------------------------------------------- #
 def render_with_playwright(htmls: List[str], out_path: str) -> bool:
     try:
         from playwright.sync_api import sync_playwright
@@ -167,13 +149,13 @@ def render_with_playwright(htmls: List[str], out_path: str) -> bool:
             os.unlink(f)
         return True
     except Exception as e:
-        print(f"  Playwright falló: {e}", file=sys.stderr)
+        print(f"  Playwright fallo: {e}", file=sys.stderr)
         return False
 
 
 def render_with_pdfkit(htmls: List[str], out_path: str) -> bool:
     try:
-        import pdfkit  # requiere binario wkhtmltopdf
+        import pdfkit
     except ImportError:
         return False
     try:
@@ -191,7 +173,7 @@ def render_with_pdfkit(htmls: List[str], out_path: str) -> bool:
             os.unlink(f)
         return True
     except Exception as e:
-        print(f"  pdfkit/wkhtmltopdf falló: {e}", file=sys.stderr)
+        print(f"  pdfkit/wkhtmltopdf fallo: {e}", file=sys.stderr)
         return False
 
 
@@ -212,7 +194,7 @@ def render_with_weasyprint(htmls: List[str], out_path: str) -> bool:
             os.unlink(f)
         return True
     except Exception as e:
-        print(f"  WeasyPrint falló: {e}", file=sys.stderr)
+        print(f"  WeasyPrint fallo: {e}", file=sys.stderr)
         return False
 
 
@@ -226,26 +208,19 @@ def merge_pdfs(parts: List[str], out_path: str) -> None:
 
 
 def inject_header(html: str, header: str) -> str:
-    """Inserta la cabecera justo después de <body> (o al principio)."""
     if re.search(r"<body[^>]*>", html, re.IGNORECASE):
-        return re.sub(r"(<body[^>]*>)", r"\1" + header, html, count=1,
-                      flags=re.IGNORECASE)
+        return re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + header,
+                      html, count=1, flags=re.IGNORECASE)
     return header + html
 
 
-# --------------------------------------------------------------------------- #
-# Main
-# --------------------------------------------------------------------------- #
 def main():
-    ap = argparse.ArgumentParser(description="Exporta a PDF las campañas de "
-                                 "Mailchimp enviadas en viernes a una audiencia.")
-    ap.add_argument("--audience", default="OPZGZ",
-                    help="Nombre de la audiencia/público (def: OPZGZ)")
-    ap.add_argument("--api-key", default=os.environ.get("MAILCHIMP_API_KEY"),
-                    help="API key (o variable de entorno MAILCHIMP_API_KEY)")
-    ap.add_argument("--out", default="viernes_OPZGZ.pdf", help="PDF de salida")
-    ap.add_argument("--save-html", action="store_true",
-                    help="Guarda también el HTML de cada campaña")
+    ap = argparse.ArgumentParser(
+        description="Exporta a PDF las campanas de Mailchimp enviadas en viernes.")
+    ap.add_argument("--audience", default="OPZGZ")
+    ap.add_argument("--api-key", default=os.environ.get("MAILCHIMP_API_KEY"))
+    ap.add_argument("--out", default="viernes_OPZGZ.pdf")
+    ap.add_argument("--save-html", action="store_true")
     args = ap.parse_args()
 
     if not args.api_key:
@@ -258,21 +233,21 @@ def main():
     print(f"Audiencia: '{audience['name']}' (id {audience['id']})")
 
     campaigns = mc.sent_campaigns(audience["id"])
-    print(f"Campañas enviadas a esa audiencia: {len(campaigns)}")
+    print(f"Campanas enviadas a esa audiencia: {len(campaigns)}")
 
     fridays = [c for c in campaigns if is_friday(c.get("send_time", ""))]
     fridays.sort(key=lambda c: c.get("send_time", ""))
     print(f"Enviadas en VIERNES: {len(fridays)}")
 
     if not fridays:
-        sys.exit("No hay campañas enviadas en viernes para esa audiencia.")
+        sys.exit("No hay campanas enviadas en viernes para esa audiencia.")
 
     htmls = []
     for i, c in enumerate(fridays, 1):
         subj = c.get("settings", {}).get("subject_line", "")
         title = c.get("settings", {}).get("title", "")
         when = fmt_date(c.get("send_time", ""))
-        print(f"  [{i}/{len(fridays)}] {when} · {subj}")
+        print(f"  [{i}/{len(fridays)}] {when} - {subj}")
         html = mc.campaign_html(c["id"])
         if not html:
             html = "<html><body><p>(sin contenido HTML)</p></body></html>"
@@ -286,12 +261,11 @@ def main():
     print("Renderizando PDF...")
     for engine in (render_with_playwright, render_with_pdfkit, render_with_weasyprint):
         if engine(htmls, args.out):
-            print(f"OK -> {args.out} ({len(fridays)} campañas)")
+            print(f"OK -> {args.out} ({len(fridays)} campanas)")
             return
-    sys.exit("ERROR: ningún motor de PDF disponible. Instala uno:\n"
-             "  pip install playwright pypdf && python -m playwright install chromium\n"
-             "  o  pip install pdfkit pypdf  (+ apt install wkhtmltopdf)\n"
-             "  o  pip install weasyprint pypdf")
+    sys.exit("ERROR: ningun motor de PDF disponible. Instala uno:\n"
+             "  py -m pip install playwright pypdf\n"
+             "  py -m playwright install chromium")
 
 
 if __name__ == "__main__":
