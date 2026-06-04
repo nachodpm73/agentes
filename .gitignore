@@ -4,3 +4,5 @@
 *.pem
 logs/
 .hermes/
+__pycache__/
+*.pyc
