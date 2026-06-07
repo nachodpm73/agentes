@@ -166,6 +166,28 @@ def main():
     if not camps:
         sys.exit("Sin campanas en el periodo.")
 
+    # Pre-cargar reports y deduplicar: cuando hay varias campanas con el mismo
+    # asunto y la misma fecha (reenvio a no-abridores, prueba, etc.) se conserva
+    # solo la principal (la de mayor numero de envios).
+    info = {}
+    for c in camps:
+        rep = mc.report(c["id"])
+        st = c.get("send_time", "")
+        subj = c.get("settings", {}).get("subject_line", "")
+        info[c["id"]] = {"c": c, "rep": rep, "subj": subj,
+                         "env": rep.get("emails_sent", 0), "fecha": st[:10]}
+    mejores = {}
+    for cid, d in info.items():
+        k = (d["subj"], d["fecha"])
+        if k not in mejores or d["env"] > info[mejores[k]]["env"]:
+            mejores[k] = cid
+    keep = set(mejores.values())
+    descartadas = [d for cid, d in info.items() if cid not in keep]
+    for d in descartadas:
+        print(f"  (descartada duplicada/prueba) {d['fecha']} env={d['env']} {d['subj'][:40]}")
+    camps = [info[cid]["c"] for cid in
+             sorted(keep, key=lambda cid: info[cid]["c"].get("send_time", ""))]
+
     resumen = []                 # filas de Resumen General
     rebotes_all = []             # (campana, email, tipo, fecha)
     bajas_all = []               # (campana, email, fecha, razon)
@@ -182,7 +204,7 @@ def main():
             fecha, dia = d.strftime("%Y-%m-%d"), DIAS[d.weekday()]
         except Exception:
             fecha, dia = st[:10], ""
-        rep = mc.report(cid)
+        rep = info[cid]["rep"]
         env = rep.get("emails_sent", 0)
         uo = rep.get("opens", {}).get("unique_opens", 0)
         orate = rep.get("opens", {}).get("open_rate", 0) or 0
