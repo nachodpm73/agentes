@@ -83,7 +83,8 @@ class Mailchimp:
         })
 
     def email_activity(self, cid):
-        """Devuelve (opens_por_email, lista_rebotes, universo_emails)."""
+        """Devuelve (opens_por_email, lista_rebotes, universo_emails).
+        Conserva el email TAL CUAL lo devuelve Mailchimp (con sus mayusculas)."""
         opens, rebotes, universo = {}, [], set()
         offset = 0
         while True:
@@ -94,7 +95,7 @@ class Mailchimp:
             })
             emails = data.get("emails", [])
             for e in emails:
-                addr = (e.get("email_address") or "").lower()
+                addr = e.get("email_address") or ""
                 if not addr:
                     continue
                 universo.add(addr)
@@ -192,7 +193,8 @@ def main():
     resumen = []                 # filas de Resumen General (solo campanas principales)
     rebotes_all = []             # (campana, email, tipo, fecha)  -> TODAS las campanas
     bajas_all = []               # (campana, email, fecha, razon) -> TODAS las campanas
-    opens_acum = {}              # email -> total aperturas        -> TODAS las campanas
+    opens_acum = {}              # email(min) -> total aperturas    -> TODAS las campanas
+    disp = {}                    # email(min) -> email original (con sus mayusculas)
     universo = set()             # todos los destinatarios del periodo
     tot = {"baja": 0, "hard": 0, "soft": 0, "tot_reb": 0}
 
@@ -222,9 +224,11 @@ def main():
 
         # --- Detalle y agregados: TODAS las campanas (incluye reenvios/pruebas) ---
         op, reb, uni = mc.email_activity(cid)
-        universo |= uni
+        for a in uni:
+            lo = a.lower(); disp.setdefault(lo, a); universo.add(lo)
         for addr, n in op.items():
-            opens_acum[addr] = opens_acum.get(addr, 0) + n
+            lo = addr.lower(); disp.setdefault(lo, addr)
+            opens_acum[lo] = opens_acum.get(lo, 0) + n
         for addr, tp, ts in reb:
             rebotes_all.append([subj, addr, tp, ts])
         for u in mc.unsubscribed(cid):
@@ -281,7 +285,7 @@ def main():
     # aperturas por destinatario
     ws = wb.create_sheet("Aperturas por Destinatario")
     _head(ws, ["Email", "Empresa", "Total Aperturas"])
-    dest = sorted(((a, empresa(a), n) for a, n in opens_acum.items()),
+    dest = sorted(((disp.get(a, a), empresa(a), n) for a, n in opens_acum.items()),
                   key=lambda x: x[2], reverse=True)
     for i, (a, emp, n) in enumerate(dest, 2):
         ws.cell(row=i, column=1, value=a)
