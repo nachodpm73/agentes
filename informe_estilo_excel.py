@@ -184,40 +184,43 @@ def main():
     keep = set(mejores.values())
     descartadas = [d for cid, d in info.items() if cid not in keep]
     for d in descartadas:
-        print(f"  (descartada duplicada/prueba) {d['fecha']} env={d['env']} {d['subj'][:40]}")
-    camps = [info[cid]["c"] for cid in
-             sorted(keep, key=lambda cid: info[cid]["c"].get("send_time", ""))]
+        print(f"  (reenvio/prueba: fuera del Resumen, dentro de detalle) "
+              f"{d['fecha']} env={d['env']} {d['subj'][:40]}")
+    # Todas las campanas, ordenadas por fecha de envio
+    camps_all = sorted(info.values(), key=lambda d: d["c"].get("send_time", ""))
 
-    resumen = []                 # filas de Resumen General
-    rebotes_all = []             # (campana, email, tipo, fecha)
-    bajas_all = []               # (campana, email, fecha, razon)
-    opens_acum = {}              # email -> total aperturas
+    resumen = []                 # filas de Resumen General (solo campanas principales)
+    rebotes_all = []             # (campana, email, tipo, fecha)  -> TODAS las campanas
+    bajas_all = []               # (campana, email, fecha, razon) -> TODAS las campanas
+    opens_acum = {}              # email -> total aperturas        -> TODAS las campanas
     universo = set()             # todos los destinatarios del periodo
-    tot = {"env": 0, "uo": 0, "baja": 0, "hard": 0, "soft": 0, "tot_reb": 0}
+    tot = {"baja": 0, "hard": 0, "soft": 0, "tot_reb": 0}
 
-    for c in camps:
-        cid = c["id"]
-        subj = c.get("settings", {}).get("subject_line", "")
+    for d in camps_all:
+        c = d["c"]; cid = c["id"]; rep = d["rep"]; subj = d["subj"]
         st = c.get("send_time", "")
         try:
-            d = dt.datetime.fromisoformat(st.replace("Z", "+00:00"))
-            fecha, dia = d.strftime("%Y-%m-%d"), DIAS[d.weekday()]
+            dd = dt.datetime.fromisoformat(st.replace("Z", "+00:00"))
+            fecha, dia = dd.strftime("%Y-%m-%d"), DIAS[dd.weekday()]
         except Exception:
             fecha, dia = st[:10], ""
-        rep = info[cid]["rep"]
-        env = rep.get("emails_sent", 0)
-        uo = rep.get("opens", {}).get("unique_opens", 0)
-        orate = rep.get("opens", {}).get("open_rate", 0) or 0
-        ct = rep.get("clicks", {}).get("clicks_total", 0)
-        crate = rep.get("clicks", {}).get("click_rate", 0) or 0
-        baja = rep.get("unsubscribed", 0)
-        hard = rep.get("bounces", {}).get("hard_bounces", 0)
-        soft = rep.get("bounces", {}).get("soft_bounces", 0)
-        treb = hard + soft
-        resumen.append([subj, fecha, dia, env, uo, orate, ct, crate, baja, hard, soft, treb])
-        tot["env"] += env; tot["uo"] += uo; tot["baja"] += baja
-        tot["hard"] += hard; tot["soft"] += soft; tot["tot_reb"] += treb
 
+        # --- Resumen General: solo la campana principal de cada (asunto, fecha) ---
+        if cid in keep:
+            env = rep.get("emails_sent", 0)
+            uo = rep.get("opens", {}).get("unique_opens", 0)
+            orate = rep.get("opens", {}).get("open_rate", 0) or 0
+            ct = rep.get("clicks", {}).get("clicks_total", 0)
+            crate = rep.get("clicks", {}).get("click_rate", 0) or 0
+            baja = rep.get("unsubscribed", 0)
+            hard = rep.get("bounces", {}).get("hard_bounces", 0)
+            soft = rep.get("bounces", {}).get("soft_bounces", 0)
+            treb = hard + soft
+            resumen.append([subj, fecha, dia, env, uo, orate, ct, crate, baja, hard, soft, treb])
+            tot["baja"] += baja; tot["hard"] += hard
+            tot["soft"] += soft; tot["tot_reb"] += treb
+
+        # --- Detalle y agregados: TODAS las campanas (incluye reenvios/pruebas) ---
         op, reb, uni = mc.email_activity(cid)
         universo |= uni
         for addr, n in op.items():
@@ -231,7 +234,11 @@ def main():
             except Exception:
                 pass
             bajas_all.append([subj, u.get("email_address", ""), ts, u.get("reason", "")])
-        print(f"  - {fecha} {subj[:40]}  env={env} uo={uo}")
+        print(f"  - {fecha} {subj[:40]}  env={d['env']}")
+
+    # Totales del Resumen: tasa de apertura global de las campanas principales
+    tot_env = sum(r[3] for r in resumen)
+    tot_uo = sum(r[4] for r in resumen)
 
     # ---------- construir Excel ----------
     wb = Workbook()
@@ -246,7 +253,7 @@ def main():
             if j in (6, 8):
                 cell.number_format = "0.00%"
     r = len(resumen) + 2
-    orate_tot = (tot["uo"] / tot["env"]) if tot["env"] else 0
+    orate_tot = (tot_uo / tot_env) if tot_env else 0
     ws.cell(row=r, column=6, value=orate_tot).number_format = "0.00%"
     ws.cell(row=r, column=9, value=tot["baja"])
     ws.cell(row=r, column=10, value=tot["hard"])
