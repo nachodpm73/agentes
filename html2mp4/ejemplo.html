@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" data-capture-duration="4">
+<head>
+<meta charset="utf-8">
+<!-- El script puede leer esta duración automáticamente -->
+<meta name="capture-duration" content="4">
+<style>
+  html, body { margin: 0; height: 100%; background: #0d1117; overflow: hidden;
+    font-family: system-ui, sans-serif; color: #fff; }
+  .stage { position: relative; width: 100vw; height: 100vh; }
+
+  /* Transición CSS: la barra crece de 0 a 100% en 2s, empieza a los 0.5s */
+  .bar {
+    position: absolute; top: 40%; left: 5%; height: 24px; width: 0%;
+    background: linear-gradient(90deg,#3b82f6,#06b6d4); border-radius: 12px;
+    animation: grow 2s ease-in-out 0.5s forwards;
+  }
+  @keyframes grow { to { width: 90%; } }
+
+  /* Caja que rota: animación CSS de 4s en bucle */
+  .box {
+    position: absolute; top: 20%; left: 50%; width: 80px; height: 80px;
+    margin-left: -40px; background: #f59e0b; border-radius: 12px;
+    animation: spin 4s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Reloj movido por JS (requestAnimationFrame) para probar timing JS */
+  .clock { position: absolute; bottom: 8%; left: 0; width: 100%;
+    text-align: center; font-size: 48px; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="box"></div>
+  <div class="bar"></div>
+  <div class="clock" id="clock">0.00s</div>
+</div>
+<script>
+  const clock = document.getElementById('clock');
+  const t0 = performance.now();
+  function tick() {
+    const t = (performance.now() - t0) / 1000;
+    clock.textContent = t.toFixed(2) + 's';
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>
+</body>
+</html>

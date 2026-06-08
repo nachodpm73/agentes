@@ -1,0 +1,19 @@
+{
+  "name": "html2mp4",
+  "version": "1.0.0",
+  "description": "Convierte HTML standalone en MP4 respetando los tiempos exactos de sus transiciones (CSS + JS) mediante reloj virtual.",
+  "main": "html2mp4.js",
+  "bin": {
+    "html2mp4": "html2mp4.js"
+  },
+  "scripts": {
+    "example": "node html2mp4.js ejemplo.html"
+  },
+  "keywords": ["html", "mp4", "video", "css-animation", "puppeteer", "ffmpeg", "timecut"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "timecut": "^0.3.3"
+  }
+}
